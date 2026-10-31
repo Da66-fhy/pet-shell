@@ -254,21 +254,36 @@ class OverlayService : Service() {
                 val rect = windowRect()
                 for (line in String(buf).split('\n')) {
                     val parts = line.trim().split(' ')
-                    if (parts.size < 2) continue
-                    val x = parts[0].toIntOrNull() ?: continue
-                    val y = parts[1].toIntOrNull() ?: continue
-                    // 只有点在「她身上那块矩形」里才反应
-                    if (x in rect[0]..rect[2] && y in rect[1]..rect[3]) {
-                        val d = resources.displayMetrics.density
-                        val cx = (x - rect[0]) / d
-                        val cy = (y - rect[1]) / d
-                        lookAndPoke(cx, cy)
-                        break
+                    if (parts.size < 3) continue
+                    val kind = parts[0]
+                    val x = parts[1].toIntOrNull() ?: continue
+                    val y = parts[2].toIntOrNull() ?: continue
+                    val d = resources.displayMetrics.density
+                    // 换算到页面坐标（可能超出窗口，视线会自己夹到边缘方向）
+                    val cx = (x - rect[0]) / d
+                    val cy = (y - rect[1]) / d
+                    if (kind == "t") {
+                        // 点一下：先让她看过去；只有落在她窗口里才 Q 弹
+                        val inside = x in rect[0]..rect[2] && y in rect[1]..rect[3]
+                        if (inside) lookAndPoke(cx, cy) else lookOnly(cx, cy)
+                    } else {
+                        // 手指移动：全屏都让她看过去（平滑注视）
+                        lookOnly(cx, cy)
                     }
                 }
             }
         } catch (_: Throwable) {
         }
+    }
+
+    /** 只喂视线，不动反应 */
+    private fun lookOnly(cx: Float, cy: Float) {
+        try {
+            web.evaluateJavascript(
+                "window.DSHPet && window.DSHPet.lookAt && window.DSHPet.lookAt($cx, $cy)",
+                null
+            )
+        } catch (_: Throwable) {}
     }
 
     /** 先让她看过去，再戳一下 */
