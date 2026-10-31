@@ -87,7 +87,7 @@ class OverlayService : Service() {
         web.loadUrl(url)
 
         // 顶部拖动条：拖 = 移动，点 = 切「可输入 / 只观看」
-        val bar = View(this).apply { setBackgroundColor(Color.argb(70, 0, 0, 0)) }
+        val bar = View(this).apply { setBackgroundColor(Color.argb(24, 0, 0, 0)) }
 
         root = FrameLayout(this).apply {
             setBackgroundColor(Color.TRANSPARENT)
@@ -96,9 +96,9 @@ class OverlayService : Service() {
                 FrameLayout.LayoutParams.MATCH_PARENT
             ))
             addView(bar, FrameLayout.LayoutParams(
-                (28 * density).toInt(),
-                (36 * density).toInt()
-            ).apply { gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL })
+                (22 * density).toInt(),
+                (22 * density).toInt()
+            ).apply { gravity = Gravity.TOP or Gravity.START })
         }
 
         // 初始给个接近她身形的窗口；页面量完真实比例会再调一次
