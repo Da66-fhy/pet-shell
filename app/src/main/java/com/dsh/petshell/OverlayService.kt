@@ -102,6 +102,7 @@ class OverlayService : Service() {
             CookieManager.getInstance().setCookie(base, "dsh_pet_desk=$token")
             CookieManager.getInstance().setAcceptCookie(true)
         }
+        try { web.setLayerType(View.LAYER_TYPE_HARDWARE, null) } catch (_: Throwable) {}
         web.addJavascriptInterface(Bridge(), "DshPetShell")
         val url = "$base/dsh-pet/standalone" + if (token.isNotEmpty()) "?k=$token" else ""
         web.loadUrl(url)
@@ -132,16 +133,14 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
+            alpha = 1.0f
+            dimAmount = 0f
             gravity = Gravity.BOTTOM or Gravity.END
             // 位置可以从配置里改（ox/oy，单位 dp，右/下为正），改完重启服务即可，不用重编译
             x = (prefs.getInt("ox", 0) * density).toInt()
             y = (prefs.getInt("oy", 10) * density).toInt()
         }
         wm.addView(root, lp)
-        try {
-            val f = getExternalFilesDir(null)
-            java.io.File(f, "flags.txt").writeText("flags=" + lp.flags + " NOT_TOUCHABLE=" + ((lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) != 0))
-        } catch (_: Throwable) {}
 
         // 把手：唯一能吃触摸的小窗，用来拖她 / 复位
         val hs = (24 * density).toInt()
