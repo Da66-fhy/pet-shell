@@ -342,6 +342,7 @@ class OverlayService : Service() {
                 if (h > maxH) { w = (w.toDouble() * maxH / h).toInt(); h = maxH }
                 lp.width = w
                 lp.height = h
+                lp.alpha = 1.0f
                 wm.updateViewLayout(root, lp)
                 syncHandle()
             } catch (_: Throwable) {
@@ -360,6 +361,7 @@ class OverlayService : Service() {
                 if (w > maxW) { w = maxW; h = (w / ratio).toInt() }
                 lp.width = w
                 lp.height = h
+                lp.alpha = 1.0f
                 wm.updateViewLayout(root, lp)
                 syncHandle()
             } catch (_: Throwable) {
