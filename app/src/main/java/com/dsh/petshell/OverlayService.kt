@@ -136,6 +136,10 @@ class OverlayService : Service() {
             y = (120 * density).toInt()
         }
         wm.addView(root, lp)
+        try {
+            val f = getExternalFilesDir(null)
+            java.io.File(f, "flags.txt").writeText("flags=" + lp.flags + " NOT_TOUCHABLE=" + ((lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE) != 0))
+        } catch (_: Throwable) {}
 
         // 把手：唯一能吃触摸的小窗，用来拖她 / 复位
         val hs = (24 * density).toInt()
