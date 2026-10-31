@@ -34,6 +34,7 @@ import kotlin.math.abs
  * 所以模型窗设成 NOT_TOUCHABLE（桌面随便点，不会被它挡），
  * 只留一个 24dp 的小把手用来拖动。全屏点按由外部监听（getevent）喂进来。
  */
+// build: touchable-model-window v2
 class OverlayService : Service() {
 
     companion object {
