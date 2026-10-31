@@ -133,8 +133,8 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.BOTTOM or Gravity.END
-            x = (8 * density).toInt()
-            y = (120 * density).toInt()
+            x = 0
+            y = (60 * density).toInt()
         }
         wm.addView(root, lp)
         try {
@@ -210,8 +210,8 @@ class OverlayService : Service() {
 
     private fun resetPosition() {
         val d = resources.displayMetrics.density
-        lp.x = (8 * d).toInt()
-        lp.y = (120 * d).toInt()
+        lp.x = 0
+        lp.y = (60 * d).toInt()
         try { wm.updateViewLayout(root, lp) } catch (_: Throwable) {}
         syncHandle()
     }
