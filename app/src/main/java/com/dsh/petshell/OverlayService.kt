@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -171,6 +172,11 @@ class OverlayService : Service() {
         /** 页面量完自己要多大的画布，把窗口精确缩到那个大小——这样就不会溢出 */
         @JavascriptInterface
         fun setSize(wCss: Double, hCss: Double) = applySize(wCss, hCss)
+
+        @JavascriptInterface
+        fun dbg(msg: String) {
+            Log.i("PetShellDBG", msg)
+        }
     }
 
     /** 把窗口精确设成页面报来的 CSS 尺寸（换算成 px，并夹在屏幕内） */
