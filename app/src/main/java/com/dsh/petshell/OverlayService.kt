@@ -257,13 +257,27 @@ class OverlayService : Service() {
                     val y = parts[1].toIntOrNull() ?: continue
                     // 只有点在「她身上那块矩形」里才反应
                     if (x in rect[0]..rect[2] && y in rect[1]..rect[3]) {
-                        firePoke(1)
+                        val d = resources.displayMetrics.density
+                        val cx = (x - rect[0]) / d
+                        val cy = (y - rect[1]) / d
+                        lookAndPoke(cx, cy)
                         break
                     }
                 }
             }
         } catch (_: Throwable) {
         }
+    }
+
+    /** 先让她看过去，再戳一下 */
+    private fun lookAndPoke(cx: Float, cy: Float) {
+        try {
+            web.evaluateJavascript(
+                "window.DSHPet && window.DSHPet.lookAt && window.DSHPet.lookAt($cx, $cy)",
+                null
+            )
+        } catch (_: Throwable) {}
+        firePoke(1)
     }
 
     private fun firePoke(times: Int) {
