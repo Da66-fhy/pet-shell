@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="桌宠壳" android:textSize="22sp" android:textStyle="bold" />
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="DSH 地址（本机就是 http://127.0.0.1:3080）" />
+
+    <EditText android:id="@+id/url"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:inputType="textUri" android:text="http://127.0.0.1:3080" />
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="通行证 token（见 README，可留空试试）" />
+
+    <EditText android:id="@+id/token"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:inputType="text" />
+
+    <Button android:id="@+id/start"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="24dp" android:text="开启悬浮窗" />
+
+    <Button android:id="@+id/stop"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="关闭悬浮窗" />
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" android:textSize="13sp"
+        android:text="用法：先在系统设置里给本应用「显示在其他应用上层」权限，再回来点开启。\n\n悬浮窗顶部那条黑条：拖动 = 移动位置，点一下 = 切换「可输入 / 只观看」。" />
+</LinearLayout>
