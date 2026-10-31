@@ -125,8 +125,9 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
                 @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
-            // 她附近这一块吃触摸：点在这里她会有反应（窗口透明，看不出来）
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            // 整块穿透：这一窗永远不吃触摸，桌面照常滑动/点击
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
@@ -231,6 +232,12 @@ class OverlayService : Service() {
         }, 400)
     }
 
+    private fun windowRect(): IntArray {
+        val loc = IntArray(2)
+        try { root.getLocationOnScreen(loc) } catch (_: Throwable) {}
+        return intArrayOf(loc[0], loc[1], loc[0] + lp.width, loc[1] + lp.height)
+    }
+
     private fun checkTap() {
         val f = tapFile ?: return
         try {
@@ -241,9 +248,19 @@ class OverlayService : Service() {
                 val n = (len - tapLen).toInt().coerceAtLeast(0)
                 val buf = ByteArray(n)
                 raf.readFully(buf)
-                val lines = String(buf).count { it == '\n' }
                 tapLen = len
-                if (lines > 0) firePoke(lines)
+                val rect = windowRect()
+                for (line in String(buf).split('\n')) {
+                    val parts = line.trim().split(' ')
+                    if (parts.size < 2) continue
+                    val x = parts[0].toIntOrNull() ?: continue
+                    val y = parts[1].toIntOrNull() ?: continue
+                    // 只有点在「她身上那块矩形」里才反应
+                    if (x in rect[0]..rect[2] && y in rect[1]..rect[3]) {
+                        firePoke(1)
+                        break
+                    }
+                }
             }
         } catch (_: Throwable) {
         }
