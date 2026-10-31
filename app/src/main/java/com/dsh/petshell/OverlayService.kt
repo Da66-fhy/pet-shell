@@ -10,12 +10,15 @@ import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -77,6 +80,8 @@ class OverlayService : Service() {
             CookieManager.getInstance().setCookie(base, "dsh_pet_desk=$token")
             CookieManager.getInstance().setAcceptCookie(true)
         }
+        // 页面把「模型实际宽高比」通过这个桥报回来，壳据此定窗口形状
+        web.addJavascriptInterface(Bridge(), "DshPetShell")
         val url = "$base/dsh-pet/standalone" + if (token.isNotEmpty()) "?k=$token" else ""
         web.loadUrl(url)
 
@@ -95,9 +100,13 @@ class OverlayService : Service() {
             ).apply { gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL })
         }
 
+        // 初始给个接近她身形的窗口；页面量完真实比例会再调一次
+        val dm = resources.displayMetrics
+        val startH = (dm.heightPixels * 0.55).toInt()
+        val startW = (startH * 0.62).toInt().coerceAtMost((dm.widthPixels * 0.92).toInt())
         lp = WindowManager.LayoutParams(
-            (240 * density).toInt(),
-            (360 * density).toInt(),
+            startW,
+            startH,
             if (Build.VERSION.SDK_INT >= 26)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
@@ -143,6 +152,33 @@ class OverlayService : Service() {
                     true
                 }
                 else -> false
+            }
+        }
+    }
+
+    /** 页面 → 壳 的桥：只暴露「设置宽高比」这一件事。 */
+    inner class Bridge {
+        @JavascriptInterface
+        fun setAspect(ratio: Double) = applyAspect(ratio)
+    }
+
+    /** 按页面报来的宽高比重排窗口：高度取屏高 55%，宽度不够就压回来。 */
+    private fun applyAspect(ratio: Double) {
+        if (ratio.isNaN() || ratio < 0.15 || ratio > 8) return
+        Handler(Looper.getMainLooper()).post {
+            try {
+                val dm = resources.displayMetrics
+                var h = (dm.heightPixels * 0.55).toInt()
+                var w = (h * ratio).toInt()
+                val maxW = (dm.widthPixels * 0.92).toInt()
+                if (w > maxW) {
+                    w = maxW
+                    h = (w / ratio).toInt()
+                }
+                lp.width = w
+                lp.height = h
+                wm.updateViewLayout(root, lp)
+            } catch (_: Throwable) {
             }
         }
     }
