@@ -160,6 +160,37 @@ class OverlayService : Service() {
     inner class Bridge {
         @JavascriptInterface
         fun setAspect(ratio: Double) = applyAspect(ratio)
+
+        /** 页面问「我该多大」：给一个 CSS 像素高度（屏高的一半），页面据此定尺寸 */
+        @JavascriptInterface
+        fun heightCss(): Double {
+            val dm = resources.displayMetrics
+            return (dm.heightPixels / dm.density) * 0.5
+        }
+
+        /** 页面量完自己要多大的画布，把窗口精确缩到那个大小——这样就不会溢出 */
+        @JavascriptInterface
+        fun setSize(wCss: Double, hCss: Double) = applySize(wCss, hCss)
+    }
+
+    /** 把窗口精确设成页面报来的 CSS 尺寸（换算成 px，并夹在屏幕内） */
+    private fun applySize(wCss: Double, hCss: Double) {
+        if (wCss.isNaN() || hCss.isNaN() || wCss < 40 || hCss < 40) return
+        Handler(Looper.getMainLooper()).post {
+            try {
+                val dm = resources.displayMetrics
+                var w = (wCss * dm.density).toInt()
+                var h = (hCss * dm.density).toInt()
+                val maxW = (dm.widthPixels * 0.92).toInt()
+                val maxH = (dm.heightPixels * 0.92).toInt()
+                if (w > maxW) { h = (h.toDouble() * maxW / w).toInt(); w = maxW }
+                if (h > maxH) { w = (w.toDouble() * maxH / h).toInt(); h = maxH }
+                lp.width = w
+                lp.height = h
+                wm.updateViewLayout(root, lp)
+            } catch (_: Throwable) {
+            }
+        }
     }
 
     /** 按页面报来的宽高比重排窗口：高度取屏高 55%，宽度不够就压回来。 */
