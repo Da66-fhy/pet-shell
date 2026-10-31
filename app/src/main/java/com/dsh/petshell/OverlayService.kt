@@ -145,8 +145,8 @@ class OverlayService : Service() {
         wm.addView(root, lp)
 
         // 把手：唯一能吃触摸的小窗，用来拖她 / 复位
-        val hs = (24 * density).toInt()
-        handle = View(this).apply { setBackgroundColor(Color.TRANSPARENT) }
+        val hs = (30 * density).toInt()
+        handle = View(this).apply { setBackgroundColor(Color.argb(46, 255, 255, 255)) }
         handleLp = WindowManager.LayoutParams(
             hs, hs,
             if (Build.VERSION.SDK_INT >= 26)
