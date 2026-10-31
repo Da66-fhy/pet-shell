@@ -133,8 +133,9 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.BOTTOM or Gravity.END
-            x = (-10 * density).toInt()
-            y = (16 * density).toInt()
+            // 位置可以从配置里改（ox/oy，单位 dp，右/下为正），改完重启服务即可，不用重编译
+            x = (prefs.getInt("ox", 0) * density).toInt()
+            y = (prefs.getInt("oy", 10) * density).toInt()
         }
         wm.addView(root, lp)
         try {
@@ -210,8 +211,9 @@ class OverlayService : Service() {
 
     private fun resetPosition() {
         val d = resources.displayMetrics.density
-        lp.x = (-10 * d).toInt()
-        lp.y = (16 * d).toInt()
+        val prefs = getSharedPreferences("pet", MODE_PRIVATE)
+        lp.x = (prefs.getInt("ox", 0) * d).toInt()
+        lp.y = (prefs.getInt("oy", 10) * d).toInt()
         try { wm.updateViewLayout(root, lp) } catch (_: Throwable) {}
         syncHandle()
     }
