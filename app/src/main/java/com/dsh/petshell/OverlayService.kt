@@ -351,20 +351,11 @@ class OverlayService : Service() {
             try {
                 val dm = resources.displayMetrics
                 if (open && !panelOpen) {
-                    savedRect[0] = lp.x; savedRect[1] = lp.y
-                    savedRect[2] = lp.width; savedRect[3] = lp.height
+                    // 只开触摸，不改窗口大小和位置——否则她会跟着重排、看起来像“人没了”
                     panelOpen = true
-                    val w = (dm.widthPixels * 0.55).toInt()
-                    val h = (dm.heightPixels * 0.82).toInt()
-                    lp.width = w
-                    lp.height = h
-                    lp.x = (dm.widthPixels - w) / 2
-                    lp.y = ((dm.heightPixels * 0.9 - h) / 2).toInt().coerceAtLeast(0)
                     lp.flags = lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
                 } else if (!open && panelOpen) {
                     panelOpen = false
-                    lp.x = savedRect[0]; lp.y = savedRect[1]
-                    lp.width = savedRect[2]; lp.height = savedRect[3]
                     lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                 }
                 lp.alpha = 1.0f
