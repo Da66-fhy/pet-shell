@@ -124,9 +124,8 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
                 @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
-            // 关键：NOT_TOUCHABLE —— 这一窗永远不吃触摸，桌面照常操作
-            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            // 她附近这一块吃触摸：点在这里她会有反应（窗口透明，看不出来）
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
@@ -139,7 +138,7 @@ class OverlayService : Service() {
 
         // 把手：唯一能吃触摸的小窗，用来拖她 / 复位
         val hs = (24 * density).toInt()
-        handle = View(this).apply { setBackgroundColor(Color.argb(30, 0, 0, 0)) }
+        handle = View(this).apply { setBackgroundColor(Color.TRANSPARENT) }
         handleLp = WindowManager.LayoutParams(
             hs, hs,
             if (Build.VERSION.SDK_INT >= 26)
