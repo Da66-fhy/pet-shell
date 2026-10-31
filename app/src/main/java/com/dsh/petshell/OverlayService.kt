@@ -2,6 +2,7 @@ package com.dsh.petshell
 
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.PendingIntent
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
@@ -27,13 +28,42 @@ import kotlin.math.abs
 
 class OverlayService : Service() {
 
+    companion object {
+        const val ACTION_TOGGLE = "com.dsh.petshell.TOGGLE_TOUCH"
+    }
+
     private lateinit var wm: WindowManager
     private lateinit var root: FrameLayout
     private lateinit var web: WebView
     private lateinit var lp: WindowManager.LayoutParams
     private var focused = false
+    // 触摸是否穿透：true = 她吃触摸（可交互）；false = 全身穿透，桌面正常操作
+    private var touchable = true
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_TOGGLE) {
+            touchable = !touchable
+            applyTouch()
+            startForegroundCompat()
+            return START_STICKY
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    /** 把「是否吃触摸」落到窗口标志上。穿透时底部的一切点击都正常。 */
+    private fun applyTouch() {
+        try {
+            var f = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+            if (!focused) f = f or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            if (!touchable) f = f or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            lp.flags = f
+            wm.updateViewLayout(root, lp)
+        } catch (_: Throwable) {
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -52,10 +82,17 @@ class OverlayService : Service() {
                 )
             }
         }
+        val toggle = PendingIntent.getService(
+            this,
+            1,
+            Intent(this, OverlayService::class.java).setAction(ACTION_TOGGLE),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         val n = Notification.Builder(this, ch)
-            .setContentTitle("桌宠运行中")
+            .setContentTitle(if (touchable) "桌宠运行中（可交互）" else "桌宠运行中（穿透中）")
             .setSmallIcon(android.R.drawable.ic_menu_view)
             .setOngoing(true)
+            .addAction(Notification.Action.Builder(android.R.drawable.ic_menu_view, if (touchable) "让触摸穿透" else "恢复可交互", toggle).build())
             .build()
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
@@ -223,11 +260,7 @@ class OverlayService : Service() {
     /** 可输入模式：去掉 NOT_FOCUSABLE，WebView 才能弹键盘；代价是抢焦点。 */
     private fun toggleFocus() {
         focused = !focused
-        var flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-        if (!focused) flags = flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-        lp.flags = flags
-        wm.updateViewLayout(root, lp)
+        applyTouch()
         if (focused) {
             web.requestFocus()
         } else {
