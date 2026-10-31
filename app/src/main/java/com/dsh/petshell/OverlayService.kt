@@ -52,6 +52,8 @@ class OverlayService : Service() {
     private var tapFile: File? = null
     private var tapLen = 0L
     private var lastFire = 0L
+    private var panelOpen = false
+    private val savedRect = IntArray(4)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -190,7 +192,17 @@ class OverlayService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!moved) resetPosition()
+                    if (!moved) {
+                        if (panelOpen) {
+                            web.evaluateJavascript("window.DSHPet && DSHPet.closeMenu && DSHPet.closeMenu()", null)
+                            applyPanel(false)
+                        } else {
+                            applyPanel(true)
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                web.evaluateJavascript("window.DSHPet && DSHPet.openMenu && DSHPet.openMenu()", null)
+                            }, 120)
+                        }
+                    }
                     true
                 }
                 else -> false
@@ -261,7 +273,8 @@ class OverlayService : Service() {
                     // 换算到页面坐标（可能超出窗口，视线会自己夹到边缘方向）
                     val cx = (x - rect[0]) / d
                     val cy = (y - rect[1]) / d
-                    if (kind == "t") {
+                    if (panelOpen) { /* 菜单开着时点按交给窗口，不在这里戳她 */ }
+                    else if (kind == "t") {
                         // 点一下：先让她看过去；只有落在她窗口里才 Q 弹
                         val inside = x in rect[0]..rect[2] && y in rect[1]..rect[3]
                         if (inside) lookAndPoke(cx, cy) else lookOnly(cx, cy)
@@ -323,9 +336,41 @@ class OverlayService : Service() {
         @JavascriptInterface
         fun setSize(wCss: Double, hCss: Double) = applySize(wCss, hCss)
 
+        /** 页面开/关菜单时调用：开菜单时变可点、把窗口放大居中；关了就恢复穿透和原大小 */
+        @JavascriptInterface
+        fun setPanel(open: Boolean) = applyPanel(open)
+
         @JavascriptInterface
         fun dbg(msg: String) {
             Log.i("PetShellDBG", msg)
+        }
+    }
+
+    private fun applyPanel(open: Boolean) {
+        Handler(Looper.getMainLooper()).post {
+            try {
+                val dm = resources.displayMetrics
+                if (open && !panelOpen) {
+                    savedRect[0] = lp.x; savedRect[1] = lp.y
+                    savedRect[2] = lp.width; savedRect[3] = lp.height
+                    panelOpen = true
+                    val w = (dm.widthPixels * 0.55).toInt()
+                    val h = (dm.heightPixels * 0.82).toInt()
+                    lp.width = w
+                    lp.height = h
+                    lp.x = (dm.widthPixels - w) / 2
+                    lp.y = ((dm.heightPixels * 0.9 - h) / 2).toInt().coerceAtLeast(0)
+                    lp.flags = lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+                } else if (!open && panelOpen) {
+                    panelOpen = false
+                    lp.x = savedRect[0]; lp.y = savedRect[1]
+                    lp.width = savedRect[2]; lp.height = savedRect[3]
+                    lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                }
+                lp.alpha = 1.0f
+                wm.updateViewLayout(root, lp)
+                syncHandle()
+            } catch (_: Throwable) {}
         }
     }
 
